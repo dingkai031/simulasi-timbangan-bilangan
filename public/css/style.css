@@ -1,0 +1,34 @@
+* {
+  font-family: "Poppins", sans-serif;
+}
+
+.background-abstrak {
+  background-image: url("/img/background.jpg");
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.glass-morphism {
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 10px;
+}
+
+.glass-morphism-white {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.glass-morphism-success {
+  background: rgba(25, 135, 84, 0.5);
+  border: 1px solid rgba(25, 135, 84, 0.2);
+}
+
+.letter-spacing-3 {
+  letter-spacing: 3px;
+}
+
+.border-radius-none {
+  border-radius: 0;
+}

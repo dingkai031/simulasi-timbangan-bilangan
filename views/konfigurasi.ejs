@@ -1,0 +1,50 @@
+<%- layout("./layouts/boilerplate") %>
+<section
+  class="vh-100 d-flex justify-content-center align-items-center flex-column"
+>
+  <h3 class="fw-bolder">Konfigurasi Timbangan Bilangan</h3>
+  <div class="card mt-5 glass-morphism glass-morphism-white p-3">
+    <div class="card-body p-2">
+      <div class="mb-3">
+        <label for="gyroX" class="form-label">Sumbu X</label>
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" id="gyroX" />
+          <button id="X" class="btn btn-success button-reset">Reset X</button>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label for="gyroY" class="form-label">Sumbu Y</label>
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" id="gyroY" />
+          <button id="Y" class="btn btn-success button-reset">Reset Y</button>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label for="gyroZ" class="form-label">Sumbu Z</label>
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" id="gyroZ" />
+          <button id="Z" class="btn btn-success button-reset">Reset Z</button>
+        </div>
+      </div>
+      <div class="mt-5 d-flex justify-content-between flex-row">
+        <a href="/" class="btn btn-primary">KEMBALI</a>
+        <button id="all" class="btn btn-success button-reset">RESET ALL</button>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  "use strict";
+  (function () {
+    const resetButtons = document.querySelectorAll(".button-reset");
+    Array.from(resetButtons).forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        if (e.target.id === "all") {
+          return fetch("http://192.168.137.50/reset");
+        }
+        console.log("masuk");
+        fetch(`http://192.168.137.50/reset${e.target.id}`);
+      });
+    });
+  })();
+</script>
