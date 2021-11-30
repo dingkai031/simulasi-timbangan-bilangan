@@ -1,15 +1,27 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const MongoStore = require("connect-mongo");
-const path = require("path");
-const session = require("express-session");
-const ejsMate = require("ejs-mate");
+const { isLoggedIn } = require('./middleware');
+
+const User = require('./models/user');
+const Kelas = require('./models/kelas');
+const Murid = require('./models/murid');
+
+const methodOverride = require('method-override');
+const express = require('express');
+const mongoose = require('mongoose');
+const MongoStore = require('connect-mongo');
+const path = require('path');
+const session = require('express-session');
+const ejsMate = require('ejs-mate');
+const passport = require('passport');
+const passportLocal = require('passport-local');
+const flash = require('connect-flash');
+const querystring = require('querystring');
 const app = express();
 
 const sessionConfig = {
-  secret: "secret",
+  secret: 'secret',
   store: MongoStore.create({
-    mongoUrl: "mongodb://localhost:27017/pendidikan",
+    mongoUrl:
+      'mongodb://yovan:123456@localhost:27017/webta?authSource=webta&readPreference=primary&appname=MongoDB%20Compass&ssl=false',
   }),
   resave: false,
   saveUninitialized: true,
@@ -21,32 +33,168 @@ const sessionConfig = {
 };
 
 mongoose
-  .connect("mongodb://yovan:123456@localhost:27017/?authSource=webta")
+  .connect(
+    'mongodb://yovan:123456@localhost:27017/webta?authSource=webta&readPreference=primary&appname=MongoDB%20Compass&ssl=false'
+  )
   .then(() => {
-    console.log("koneksi sukses ke Database port 27017 Sukses");
+    console.log('koneksi sukses ke Database port 27017 Sukses');
   })
   .catch((e) => {
     console.log(`koneksike data base tidak berhasil : ${e}`);
   });
 
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
+app.use(methodOverride('_method'));
 app.use(session(sessionConfig));
-app.use(express.static(path.join(__dirname, "node_modules/bootstrap/dist")));
-app.use(express.static(path.join(__dirname, "public")));
-app.engine("ejs", ejsMate);
-
-app.get("/", (req, res) => {
-  res.render("home");
+app.use(express.static(path.join(__dirname, 'node_modules/bootstrap/dist')));
+app.use(express.static(path.join(__dirname, 'node_modules/three')));
+app.use(express.static(path.join(__dirname, 'node_modules/sweetalert2')));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.urlencoded({ extended: true }));
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(flash());
+app.use((req, res, next) => {
+  res.locals.success = req.flash('success');
+  res.locals.hapus = req.flash('hapus');
+  res.locals.error = req.flash('error');
+  res.locals.currentUser = req.user;
+  next();
 });
 
-app.get("/konfigurasi", (req, res) => {
-  res.render("konfigurasi");
+app.engine('ejs', ejsMate);
+
+passport.use(new passportLocal(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+app.get('/', (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.render('login');
+  }
+  res.redirect('/home');
 });
 
-app.all("*", (req, res) => {
-  res.status(404).send("<h1>TIDAK DITEMUKAN </h1>");
+app.get('/home', isLoggedIn, (req, res) => {
+  res.render('home');
+});
+
+app.post(
+  '/',
+  passport.authenticate('local', {
+    failureFlash: 'Username atau password salah',
+    failureRedirect: '/',
+  }),
+  (req, res) => {
+    const redirectUrl = req.session.returnTo || '/';
+    res.redirect(redirectUrl);
+  }
+);
+
+app.get('/kalibrasi', isLoggedIn, (req, res) => {
+  console.log(User);
+  res.render('kalibrasi');
+});
+
+app.get('/pilih-kelas', isLoggedIn, async (req, res) => {
+  const currentUser = await User.findById(req.user._id).populate('kelas');
+  res.render('pilihKelas', { currentUser });
+});
+
+app.post('/pilih-kelas', isLoggedIn, (req, res) => {
+  const query = querystring.stringify({
+    namaPengajar: req.body.namaPengajar,
+    kelas: req.body.kelas,
+    kelasId: req.body.kelasId,
+    tanggal: req.body.tanggal,
+  });
+  res.redirect('/mulai-kelas?' + query);
+});
+
+app.get('/mulai-kelas', isLoggedIn, async (req, res) => {
+  if (Object.keys(req.query).length === 0) {
+    req.flash('error', 'Silahkan pilih kelas terlebih dahulu');
+    return res.redirect('/pilih-kelas');
+  }
+  const tempArray = req.query.kelas.split('.');
+  const idKelas = tempArray[1];
+  const namaKelas = tempArray[0];
+  const query = {
+    namaPengajar: req.query.namaPengajar,
+    namaKelas,
+    idKelas,
+    tanggal: req.query.tanggal,
+  };
+  const kelas = await Kelas.findById(idKelas)
+    .populate('murid')
+    .catch(() => {
+      req.flash('error', 'Kelas tidak ditemukan');
+      return res.redirect('/pilih-kelas');
+    });
+  kelas.jumlahMurid = kelas.murid.length;
+  const kelasRaw = JSON.stringify(kelas);
+
+  res.render('mulaiKelas', { query, kelas, kelasRaw });
+});
+
+app.put('/mulai-kelas', async (req, res) => {
+  const tanggal = new Date(req.body.tanggal);
+  for (let i = 0; i < req.body.score.length; i++) {
+    const murid = await Murid.findById(req.body.id[i]).catch((e) => {
+      console.log(`Error : ${e}`);
+    });
+    if (!murid) {
+      continue;
+    }
+    const foundIndex = murid.nilai.findIndex(
+      (obj) => obj.tanggal.getTime() === tanggal.getTime()
+    );
+    if (foundIndex === -1) {
+      murid.nilai.push({
+        tanggal,
+        jumlahNilai: [Math.abs(parseFloat(req.body.score[i])) < 0.15 ? 1 : 0],
+      });
+      await murid
+        .save()
+        .then((data) => {
+          console.log(data);
+          console.log('Data saved!');
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+    } else {
+      murid.nilai[foundIndex].jumlahNilai.push(
+        Math.abs(parseFloat(req.body.score[i])) < 0.15 ? 1 : 0
+      );
+      await murid
+        .save()
+        .then((data) => {
+          console.log(data);
+          console.log('Data saved!');
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+    }
+  }
+  req.flash(
+    'success',
+    `Nilai untuk ${tanggal.toLocaleDateString()} berhasil dimasukkan`
+  );
+  return res.redirect('/pilih-kelas');
+});
+
+app.get('/logout', isLoggedIn, (req, res) => {
+  req.logout();
+  req.flash('success', 'Anda berhasil keluar');
+  res.redirect('/');
+});
+
+app.all('*', (req, res) => {
+  res.status(404).send('<h1>TIDAK DITEMUKAN </h1>');
 });
 
 const port = 8080;

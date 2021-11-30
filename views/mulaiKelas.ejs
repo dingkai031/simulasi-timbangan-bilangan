@@ -1,0 +1,332 @@
+<%- layout("./layouts/boilerplate") %>
+
+<section
+  class="d-flex justify-content-center align-items-center flex-column container"
+>
+  <div class="card glass-morphism glass-morphism-white p-3 w-100">
+    <div class="card-header row" style="background-color: transparent">
+      <div class="col-lg-4 text-center text-lg-start">
+        <h5 class="fw-bolder"><%= currentUser.nama %></h5>
+      </div>
+      <div class="col-lg-4 text-center">
+        <h5 class="fw-bolder text-uppercase"><%= query.namaKelas %></h5>
+      </div>
+      <div class="col-lg-4 text-center text-lg-end">
+        <h5 class="fw-bolder">
+          <%= new Date(query.tanggal).toLocaleDateString() %>
+        </h5>
+      </div>
+    </div>
+    <div class="card-body p-2">
+      <div class="row">
+        <div
+          class="col-lg-4 d-flex justify-content-center align-items-center p-2"
+        >
+          <div class="d-flex flex-column">
+            <div>
+              <h5 class="fw-bolder text-uppercase text-center">soal</h5>
+            </div>
+            <form id="formSoal">
+              <div class="row mb-3">
+                <div class="col-4">
+                  <input
+                    type="number"
+                    id="num1"
+                    class="form-control text-center"
+                    min="0"
+                    max="10"
+                    placeholder=". . ."
+                    required
+                  />
+                </div>
+                <div class="col-4">
+                  <select
+                    class="form-select text-center"
+                    required
+                    id="operator"
+                  >
+                    <option value="+">+</option>
+                    <option value="-">-</option>
+                    <option value="/">÷</option>
+                    <option value="*">x</option>
+                  </select>
+                </div>
+                <div class="col-4">
+                  <input
+                    type="number"
+                    id="num2"
+                    class="form-control text-center"
+                    min="0"
+                    max="10"
+                    placeholder=". . ."
+                    required
+                  />
+                </div>
+              </div>
+              <div class="d-flex justify-content-between">
+                <button id="resetButton" type="reset" class="btn btn-warning">
+                  Reset
+                </button>
+                <button
+                  id="submitButtonSoal"
+                  type="submit"
+                  class="btn btn-primary"
+                >
+                  Terapkan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div
+          class="
+            col-lg-4
+            d-flex
+            justify-content-center
+            align-items-center
+            flex-column
+            p-2
+          "
+          id="simulasiWrapper"
+        >
+          <button
+            onclick="fetch('http://192.168.137.50/reset')"
+            class="
+              btn btn-primary
+              mb-3
+              w-100
+              glass-morphism glass-morphism-white
+            "
+          >
+            Kalibrasi
+          </button>
+          <form
+            action="/mulai-kelas?_method=PUT"
+            method="post"
+            class="d-flex justify-content-center"
+            id="nilaiSubmitForm"
+          >
+            <input
+              type="date"
+              readonly
+              required
+              name="tanggal"
+              class="d-none"
+              value="<%= query.tanggal %>"
+            />
+            <div class="row w-100">
+              <% for (const murid of kelas.murid) { %>
+              <div class="col-lg-6 mb-3">
+                <div class="card glass-morphism glass-morphism-white">
+                  <div class="card-header">
+                    <h5 class="m-0 text-center"><%= murid.nama %></h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="cube-content-2">
+                      <div id="3DcubeX<%= murid._id %>"></div>
+                    </div>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="score<%= murid._id %>"
+                      name="score"
+                      readonly
+                      required
+                    />
+                    <input
+                      type="text"
+                      class="d-none"
+                      name="id"
+                      value="<%= murid._id %>"
+                      readonly
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              <% } %>
+            </div>
+          </form>
+        </div>
+        <div
+          class="
+            col-lg-4
+            d-flex
+            justify-content-center
+            align-items-center
+            flex-column
+            p-2
+          "
+        >
+          <button
+            id="akhiriKelasButton"
+            class="btn btn-primary glass-morphism glass-morphism-white mb-3"
+          >
+            Akhiri Kelas
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const formSoal = document.querySelector('#formSoal');
+  formSoal.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const simulasiWrapper = document.querySelector('#simulasiWrapper');
+    const simulasiWrapperBlocker = document.querySelector(
+      '#simulasiWrapperBlocker'
+    );
+    const num1 = document.querySelector('#num1');
+    const num2 = document.querySelector('#num2');
+    const operator = document.querySelector('#operator');
+    const submitButtonSoal = document.querySelector('#submitButtonSoal');
+    const resetButton = document.querySelector('#resetButton');
+    // submitButtonSoal.setAttribute('type', 'button');
+    // resetButton.setAttribute('type', 'button');
+    submitButtonSoal.remove();
+    resetButton.remove();
+
+    num1.setAttribute('readonly', '');
+    num2.setAttribute('readonly', '');
+    operator.setAttribute('disabled', '');
+    //=====================================================================================
+
+    const kelas = JSON.parse('<%- kelasRaw %>');
+
+    let source;
+
+    if (!!window.EventSource) {
+      source = new EventSource('http://192.168.137.50/events');
+
+      source.addEventListener(
+        'open',
+        function (e) {
+          console.log('Data Terhubung');
+        },
+        false
+      );
+
+      source.addEventListener(
+        'error',
+        function (e) {
+          if (e.target.readyState != EventSource.OPEN) {
+            console.log('Data Terputus');
+          }
+        },
+        false
+      );
+    }
+
+    function parentWidth(elem) {
+      return elem.parentElement.clientWidth;
+    }
+
+    function parentHeight(elem) {
+      return elem.parentElement.clientHeight;
+    }
+
+    function init3D(cubeID, camera, renderer, scoreInputId) {
+      const scene = new THREE.Scene(cubeID);
+      renderer.setSize(
+        parentWidth(document.getElementById(cubeID)),
+        parentHeight(document.getElementById(cubeID))
+      );
+
+      document.getElementById(cubeID).appendChild(renderer.domElement);
+
+      const geometry = new THREE.BoxGeometry(5, 1, 4);
+
+      const pointlight = new THREE.PointLight(0xffffff, 1);
+      pointlight.position.set(200, 200, 200);
+
+      const material = new THREE.MeshPhysicalMaterial();
+
+      const cube = new THREE.Mesh(geometry, material);
+      scene.add(cube);
+      scene.add(pointlight);
+      camera.position.z = 6;
+      renderer.render(scene, camera);
+      //===========temp=========================
+      const scoreInput = document.querySelector(`#${scoreInputId}`);
+      cube.rotation.x = 0.2;
+      cube.rotation.z = Math.random().toFixed(2);
+      cube.rotation.y = 0;
+      scoreInput.value = cube.rotation.z;
+      renderer.render(scene, camera);
+      //===========temp=========================
+      // scoreInput.value = 3;
+      source.addEventListener(
+        'gyro_readings',
+        function (e) {
+          const scoreInput = document.querySelector(`#${scoreInputId}`);
+          const obj = JSON.parse(e.data);
+          cube.rotation.x = 0.2;
+          cube.rotation.z = Math.random().toFixed(2);
+          cube.rotation.y = 0;
+          scoreInput.value = Math.random().toFixed(2);
+          renderer.render(scene, camera);
+        },
+        false
+      );
+    }
+
+    function onWindowResize(cubeID, camera, renderer) {
+      camera.aspect =
+        parentWidth(document.getElementById(cubeID)) /
+        parentHeight(document.getElementById(cubeID));
+      //camera.aspect = window.innerWidth /  window.innerHeight;
+      camera.updateProjectionMatrix();
+      //renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setSize(
+        parentWidth(document.getElementById(cubeID)),
+        parentHeight(document.getElementById(cubeID))
+      );
+    }
+
+    for (const murid of kelas.murid) {
+      const theID = `3DcubeX${murid._id}`;
+      const theScoreInputId = `score${murid._id}`;
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        parentWidth(document.getElementById(theID)) /
+          parentHeight(document.getElementById(theID)),
+        0.1,
+        1000
+      );
+      const renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+      });
+      init3D(theID, camera, renderer, theScoreInputId);
+      window.addEventListener(
+        'resize',
+        onWindowResize(theID, camera, renderer),
+        false
+      );
+    }
+
+    //===================================================================================
+    const akhiriKelasButton = document.querySelector('#akhiriKelasButton');
+    akhiriKelasButton.addEventListener('click', () => {
+      if (source) {
+        source.close();
+        akhiriKelasButton.setAttribute('id', 'simpanNilai');
+        akhiriKelasButton.innerHTML = 'Simpan Nilai';
+        const simpanKelasButton = document.createElement('button');
+        simpanKelasButton.className =
+          'btn btn-primary glass-morphism glass-morphism-white';
+        simpanKelasButton.innerHTML = 'Simpan Nilai';
+        simpanKelasButton.setAttribute('id', 'simpanKelas');
+        const parentNode = akhiriKelasButton.parentNode;
+        parentNode.appendChild(simpanKelasButton);
+        akhiriKelasButton.remove();
+        simpanKelasButton.addEventListener('click', () => {
+          const nilaiSubmitForm = document.querySelector('#nilaiSubmitForm');
+          nilaiSubmitForm.submit();
+        });
+      }
+    });
+  });
+</script>

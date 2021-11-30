@@ -2,14 +2,14 @@
 <section
   class="vh-100 d-flex justify-content-center align-items-center flex-column"
 >
-  <h3 class="fw-bolder">Selamat Datang Pak Joko</h3>
+  <h3 class="fw-bolder">Selamat Datang <%= currentUser.nama %></h3>
   <div class="card mt-5 glass-morphism glass-morphism-white p-3">
     <div class="card-header p-2 border-0" style="background-color: transparent">
       <h5 class="m-0">Silahkan pilih menu di bawah ini</h5>
     </div>
     <div class="card-body p-2">
       <a
-        href="/konfigurasi"
+        href="/kalibrasi"
         class="
           glass-morphism glass-morphism-white
           btn btn-primary
@@ -18,10 +18,10 @@
           mb-2
         "
       >
-        Konfigurasi Timbangan Bilangan
+        Kalibrasi Timbangan Bilangan
       </a>
       <a
-        href="javascript:void(0)"
+        href="/pilih-kelas"
         class="
           glass-morphism glass-morphism-white
           btn btn-primary

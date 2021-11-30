@@ -1,0 +1,69 @@
+<%- layout("./layouts/boilerplate") %>
+<%- include("./flash")%>
+<section
+  class="vh-100 d-flex justify-content-center align-items-center flex-column"
+>
+  <h3 class="fw-bolder">Pilih Kelas</h3>
+
+  <div class="card mt-5 glass-morphism glass-morphism-white p-3">
+    <div class="card-body p-2">
+      <form action="/pilih-kelas" method="post">
+        <div class="mb-3">
+          <label for="namaPengajar" class="form-label">Nama Pengajar</label>
+          <input
+            type="text"
+            name="namaPengajar"
+            class="form-control glass-morphism glass-morphism-white"
+            id="namaPengajar"
+            value="<%= currentUser.nama %>"
+            readonly
+          />
+        </div>
+        <div class="mb-3">
+          <label for="kelas" class="form-label">Kelas</label>
+          <select
+            name="kelas"
+            class="
+              form-select
+              glass-morphism glass-morphism-white
+              text-uppercase
+            "
+            required
+          >
+            <option value="" class="d-none">Pilih Kelas</option>
+            <% for( const kelas of currentUser.kelas ) { %>
+            <option value="<%= `${kelas["nama-kelas"]}.${kelas["_id"]}` %>"><%= kelas["nama-kelas"] %></option>
+            <% } %>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="tanggal" class="form-label">Tanggal</label>
+          <input
+            type="date"
+            name="tanggal"
+            class="form-control glass-morphism glass-morphism-white"
+            id="tanggal"
+            required
+          />
+        </div>
+        <div class="mt-5 d-flex justify-content-between flex-row">
+          <a
+            href="/"
+            class="btn btn-primary glass-morphism glass-morphism-white"
+            >KEMBALI</a
+          >
+          <button
+            type="submit"
+            class="
+              btn btn-success
+              button-reset
+              glass-morphism glass-morphism-white
+            "
+          >
+            Mulai Kelas
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

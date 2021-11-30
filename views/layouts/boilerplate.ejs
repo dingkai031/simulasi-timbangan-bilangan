@@ -14,9 +14,19 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/style.css" />
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/107/three.min.js"></script> -->
+    <script src="/build/three.min.js"></script>
     <title>Simulasi Timbangan Bilangan</title>
   </head>
-  <body class="background-abstrak">
+  <body
+    class="
+      background-abstrak
+      d-flex
+      align-items-center
+      justify-content-center
+      vh-100
+    "
+  >
     <%- include("../template/navbar") %> <%- body %>
     <footer class="fixed-bottom bg-dark text-white py-3 px-2 row">
       <% const dateNow = new Date() %>
@@ -29,11 +39,10 @@
       <div class="col-sm-4 text-center text-sm-end">
         <p class="m-0">
           <%=
-          `${dateNow.getDay()}-${dateNow.getMonth()-1}-${dateNow.getFullYear()}`
+          `${dateNow.getDate()}-${dateNow.getMonth()+1}-${dateNow.getFullYear()}`
           %>
         </p>
       </div>
     </footer>
-    <%- include("../template/js") %>
   </body>
 </html>

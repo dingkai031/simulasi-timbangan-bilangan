@@ -8,8 +8,9 @@
   "
 >
   <div class="container-fluid">
-    <a class="navbar-brand text-dark fw-bold" href="#">Nama Aplikasi</a>
-    <button class="btn btn-danger text-uppercase letter-spacing-3">
+    <a class="navbar-brand text-dark fw-bold" href="/">Nama Aplikasi</a>
+    <% if (currentUser) { %>
+    <a href="/logout" class="btn btn-danger text-uppercase letter-spacing-3">
       <span class="me-1">
         <svg
           viewBox="0 0 24 24"
@@ -28,6 +29,7 @@
         </svg>
       </span>
       Logout
-    </button>
+    </a>
+    <% } %>
   </div>
 </nav>

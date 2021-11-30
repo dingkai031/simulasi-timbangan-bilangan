@@ -1,0 +1,21 @@
+<script src="/dist/sweetalert2.all.min.js"></script>
+
+<% if (success && success.length) { %>
+
+<script>
+  Swal.fire('<%= success %>', '', 'success');
+</script>
+
+<% }%> <% if (hapus && hapus.length) { %>
+
+<script>
+  Swal.fire('<%= hapus %>', '', 'warning');
+</script>
+
+<% } %> <% if (error && error.length) { %>
+
+<script>
+  Swal.fire('<%= error %>', '', 'error');
+</script>
+
+<% } %>
