@@ -8,7 +8,7 @@ Untuk menggunakan source code ini diperlukan :
 4. MongoDB atlas
 5. MongoDB Database Tool Package (untuk import database)
 
-Ketika semua software sudah diinstall dan berhasil dijalankan, running :
+Ketika semua software sudah diinstall dan berhasil dijalankan, jalankan perintah ini pada cmd/terminal :
 ```
 npm install
 ```
