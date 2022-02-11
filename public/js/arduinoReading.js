@@ -88,13 +88,13 @@ if (!!window.EventSource) {
     function (e) {
       //console.log("gyro_readings", e.data);
       const obj = JSON.parse(e.data);
-      document.getElementById('gyroX').value = obj.gyroX;
+      document.getElementById('gyroX').value = obj.gyroY;
       document.getElementById('gyroY').value = 0;
       document.getElementById('gyroZ').value = 0;
-
+      console.log(obj);
       // Change cube rotation after receiving the readinds
       cube.rotation.x = 0;
-      cube.rotation.z = obj.gyroX;
+      cube.rotation.z = obj.gyroY;
       cube.rotation.y = 0;
       renderer.render(scene, camera);
     },

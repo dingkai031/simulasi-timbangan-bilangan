@@ -249,23 +249,25 @@
       camera.position.z = 6;
       renderer.render(scene, camera);
       //===========temp=========================
-      const scoreInput = document.querySelector(`#${scoreInputId}`);
-      cube.rotation.x = 0.2;
-      cube.rotation.z = Math.random().toFixed(2);
-      cube.rotation.y = 0;
-      scoreInput.value = cube.rotation.z;
-      renderer.render(scene, camera);
+      // const scoreInput = document.querySelector(`#${scoreInputId}`);
+      // cube.rotation.x = 0.2;
+      // cube.rotation.z = Math.random().toFixed(2);
+      // cube.rotation.y = 0;
+      // scoreInput.value = cube.rotation.z;
+      // renderer.render(scene, camera);
       //===========temp=========================
       // scoreInput.value = 3;
       source.addEventListener(
         'gyro_readings',
         function (e) {
+          // const randomValue = parseFloat(Math.random().toFixed(2));
           const scoreInput = document.querySelector(`#${scoreInputId}`);
           const obj = JSON.parse(e.data);
-          cube.rotation.x = 0.2;
-          cube.rotation.z = Math.random().toFixed(2);
+          console.log(obj);
+          cube.rotation.x = 0;
+          cube.rotation.z = parseFloat(obj.gyroY);
           cube.rotation.y = 0;
-          scoreInput.value = Math.random().toFixed(2);
+          scoreInput.value = parseFloat(obj.gyroY);
           renderer.render(scene, camera);
         },
         false

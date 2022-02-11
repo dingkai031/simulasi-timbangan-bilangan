@@ -1,0 +1,78 @@
+<%- layout("./layouts/boilerplate") %> <%- include("./flash")%>
+<section
+  class="
+    vh-100
+    container
+    d-flex
+    justify-content-center
+    align-items-center
+    flex-column
+  "
+>
+  <div class="card w-100 glass-morphism glass-morphism-white">
+    <div class="card-header text-center">
+      <h5 class="fw-bolder m-0">
+        Lihat Nilai -
+        <span class="text-uppercase"><%= namaKelas %></span>
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-borderless" id="tableNilai">
+          <thead>
+            <tr class="glass-morphism shadow-sm">
+              <th>Nama Siswa</th>
+              <th>Jawaban yang benar</th>
+              <th class="text-center">Total Nilai</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for( const murid of murids ) { %> <% if (murid.nilai.length > 0)
+            { %>
+            <tr>
+              <td><%= murid.nama %></td>
+              <td data-t="n"><%= murid.nilai[0].jumlahNilai %></td>
+              <td data-t="n" class="akumulasi-nilai text-center">
+                <%= (murid.nilai[0].jumlahNilai.reduce((a,b)=>
+                a+b)/murid.nilai[0].jumlahNilai.length).toFixed(2) * 100 %>
+              </td>
+            </tr>
+            <% } %> <% } %>
+            <tr class="glass-morphism shadow-sm text-center fw-bolder">
+              <td colspan="2">Rata-rata</td>
+              <td id="rataRata"></td>
+            </tr>
+          </tbody>
+        </table>
+        <button class="btn btn-primary" id="download-button">
+          Download Excel
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="/dist/tableToExcel.js"></script>
+
+<script>
+  const namaKelas = '<%= namaKelas %>';
+  const tanggal = new Date('<%= tanggal %>');
+  document
+    .getElementById('download-button')
+    .addEventListener('click', function () {
+      TableToExcel.convert(document.querySelector('#tableNilai'), {
+        name: `${namaKelas.toUpperCase()}-${tanggal.toLocaleDateString()}.xlsx`,
+      });
+    });
+</script>
+
+<script>
+  window.onload = function () {
+    const semuaNilai = [];
+    document.querySelectorAll('.akumulasi-nilai').forEach((el) => {
+      semuaNilai.push(+el.innerText);
+    });
+    document.querySelector('#rataRata').innerText =
+      semuaNilai.reduce((a, b) => a + b) / semuaNilai.length;
+  };
+</script>

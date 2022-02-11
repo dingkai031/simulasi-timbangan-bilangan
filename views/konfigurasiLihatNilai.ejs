@@ -1,0 +1,112 @@
+<link rel="stylesheet" href="/dist/css/tom-select.bootstrap5.min.css" />
+<%- layout("./layouts/boilerplate") %> <%- include("./flash")%>
+<section
+  class="vh-100 d-flex justify-content-center align-items-center flex-column"
+>
+  <h3 class="fw-bolder">Pilih Kelas dan Tanggal Nilai</h3>
+
+  <div class="card mt-5 glass-morphism glass-morphism-white p-3">
+    <div class="card-body p-2">
+      <form action="/konfigurasi-lihat-nilai" method="post">
+        <div class="mb-3">
+          <label for="namaPengajar" class="form-label">Nama Pengajar</label>
+          <input
+            type="text"
+            name="namaPengajar"
+            class="form-control glass-morphism glass-morphism-white"
+            id="namaPengajar"
+            value="<%= currentUser.nama %>"
+            readonly
+          />
+        </div>
+        <div class="mb-3">
+          <label for="kelas" class="form-label">Kelas</label>
+          <select name="kelas" id="kelas" class="form-select glass-morphism">
+            <option value="" class="d-none" selected>
+              Silahkan pilih kelas
+            </option>
+            <% for( const kelas of currentUser.kelas ) { %>
+            <option class="text-uppercase" value="<%= kelas._id %>">
+              <%= kelas['nama-kelas'] %>
+            </option>
+            <% } %>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="tanggal" class="form-label">Tanggal</label>
+          <select
+            name="tanggal"
+            id="tanggal"
+            class="form-select br-10-custom"
+          ></select>
+        </div>
+
+        <div class="mt-5 d-flex justify-content-between flex-row">
+          <a
+            href="/"
+            class="btn btn-primary glass-morphism glass-morphism-white"
+            >KEMBALI</a
+          >
+          <button
+            type="submit"
+            class="
+              btn btn-success
+              button-reset
+              glass-morphism glass-morphism-white
+            "
+          >
+            Lihat Nilai
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<script src="/dist/js/tom-select.complete.min.js"></script>
+<script src="/build/global/luxon.min.js"></script>
+<script>
+  const DateTime = luxon.DateTime;
+</script>
+<script>
+  const tomselect = new TomSelect('#tanggal', {
+    create: true,
+    placeholder: 'Silahkan pilih tanggal',
+    hidePlaceholder: true,
+  });
+</script>
+<script>
+  const kelas = document.querySelector('#kelas');
+  kelas.addEventListener('change', async (e) => {
+    const newOptionArray = document.querySelectorAll('.new-option');
+    if (newOptionArray) {
+      for (const newOption of newOptionArray) {
+        newOption.remove();
+      }
+    }
+    await fetch(`/all-murid-in-kelas/${e.target.value}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const tanggalInput = document.querySelector('#tanggal');
+        tanggalInput.removeAttribute('disabled');
+        const tanggal = new Set();
+        for (const murid of data.murid) {
+          for (const nilai of murid.nilai) {
+            tanggal.add(nilai.tanggal);
+          }
+        }
+        const tanggalArrOfObj = [];
+        for (const tgl of tanggal) {
+          tanggalArrOfObj.push({
+            value: tgl,
+            text: DateTime.fromISO(tgl).setLocale('id').toFormat('d LLLL y'),
+          });
+        }
+        tomselect.clear();
+        tomselect.clearOptions();
+        tomselect.addOptions(tanggalArrOfObj, (user_created = false));
+        tomselect.refreshOptions();
+      });
+  });
+</script>

@@ -51,6 +51,12 @@ app.use(session(sessionConfig));
 app.use(express.static(path.join(__dirname, 'node_modules/bootstrap/dist')));
 app.use(express.static(path.join(__dirname, 'node_modules/three')));
 app.use(express.static(path.join(__dirname, 'node_modules/sweetalert2')));
+app.use(express.static(path.join(__dirname, 'node_modules/tom-select')));
+app.use(express.static(path.join(__dirname, 'node_modules/luxon')));
+app.use(
+  express.static(path.join(__dirname, 'node_modules/@linways/table-to-excel/'))
+);
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
@@ -94,7 +100,6 @@ app.post(
 );
 
 app.get('/kalibrasi', isLoggedIn, (req, res) => {
-  console.log(User);
   res.render('kalibrasi');
 });
 
@@ -139,7 +144,7 @@ app.get('/mulai-kelas', isLoggedIn, async (req, res) => {
   res.render('mulaiKelas', { query, kelas, kelasRaw });
 });
 
-app.put('/mulai-kelas', async (req, res) => {
+app.put('/mulai-kelas', isLoggedIn, async (req, res) => {
   const tanggal = new Date(req.body.tanggal);
   for (let i = 0; i < req.body.score.length; i++) {
     const murid = await Murid.findById(req.body.id[i]).catch((e) => {
@@ -185,6 +190,56 @@ app.put('/mulai-kelas', async (req, res) => {
     `Nilai untuk ${tanggal.toLocaleDateString()} berhasil dimasukkan`
   );
   return res.redirect('/pilih-kelas');
+});
+
+app.get('/konfigurasi-lihat-nilai', isLoggedIn, async (req, res) => {
+  const currentUser = await User.findById(req.user._id).populate('kelas');
+  res.render('konfigurasiLihatNilai', { currentUser });
+});
+
+app.post('/konfigurasi-lihat-nilai', isLoggedIn, async (req, res) => {
+  const query = querystring.stringify({
+    namaPengajar: req.body.namaPengajar,
+    kelasId: req.body.kelas,
+    tanggal: req.body.tanggal,
+  });
+  res.redirect('/lihat-nilai?' + query);
+});
+
+app.get('/lihat-nilai', isLoggedIn, async (req, res) => {
+  if (Object.keys(req.query).length === 0) {
+    req.flash('error', 'Harap konfigurasi pencarian terlebih dahulu');
+    return res.redirect('/konfigurasi-lihat-nilai');
+  }
+  const tanggalDateType = new Date(req.query.tanggal);
+  const kelas = await Kelas.findById(req.query.kelasId.trim()).populate(
+    'murid'
+  );
+  for (const murid of kelas.murid) {
+    murid.nilai = murid.nilai.filter(
+      (score) => score.tanggal.getTime() === tanggalDateType.getTime()
+    );
+  }
+  console.log(kelas.murid[0].nilai[0].jumlahNilai);
+  res.render('lihatNilai', {
+    murids: kelas.murid,
+    namaKelas: kelas['nama-kelas'],
+    tanggal: tanggalDateType,
+  });
+});
+
+app.get('/all-murid-in-kelas/:idKelas', isLoggedIn, async (req, res) => {
+  const { idKelas } = req.params;
+  if (!idKelas) {
+    return res.status(400).send('Harap masukkan id kelas');
+  }
+  const foundKelas = await Kelas.findById(idKelas)
+    .populate('murid')
+    .catch((e) => console.log(`error : ${e}`));
+  if (Object.keys(foundKelas).length === 0) {
+    return res.status(400).send(`Kelas dengan id ${idKelas} tidak ditemukan`);
+  }
+  res.send(foundKelas);
 });
 
 app.get('/logout', isLoggedIn, (req, res) => {
