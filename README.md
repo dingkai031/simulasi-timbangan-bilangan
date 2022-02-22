@@ -18,9 +18,6 @@ Ketika semua software sudah diinstall dan berhasil dijalankan, jalankan perintah
 ```
 npm install
 ```
-```
-node index.js
-```
 
 Setelah data database berhasil di import dan file arduino berhasil dipasangkan :
 1. Jalankan mongodb terlebih dahulu
